@@ -401,7 +401,13 @@ export default function EditorPage() {
 
     socket.on('connect', () => socket.emit('join-room', roomId));
 
-    socket.on('room-role', ({ isAdmin: f }) => setIsAdmin(f));
+    socket.on('room-role', ({ isAdmin: f }) => {
+      setIsAdmin(f);
+      if (f) {
+        setCanEdit(true);
+        sessionStorage.setItem(`can_edit_${roomId}`, 'true');
+      }
+    });
 
     // Full-state sync on join
     socket.on('sync-step-1', (_sv, stateAsUpdate) => {
