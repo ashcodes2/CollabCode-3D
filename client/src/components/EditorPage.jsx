@@ -406,6 +406,9 @@ export default function EditorPage() {
       if (f) {
         setCanEdit(true);
         sessionStorage.setItem(`can_edit_${roomId}`, 'true');
+      } else {
+        setCanEdit(false);
+        sessionStorage.removeItem(`can_edit_${roomId}`);
       }
     });
 
