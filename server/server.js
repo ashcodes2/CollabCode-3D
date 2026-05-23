@@ -9,8 +9,17 @@ const authRoutes = require('./routes/auth');
 const projectRoutes = require('./routes/projects');
 const executeRoutes = require('./routes/execute');
 
+// Allowed origins: localhost + any Vercel deployment + custom override via env
+const ALLOWED_ORIGINS = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:5175',
+  /\.vercel\.app$/,
+  ...(process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : []),
+];
+
 const app = express();
-app.use(cors());
+app.use(cors({ origin: ALLOWED_ORIGINS, credentials: true }));
 app.use(express.json());
 
 // Routes
@@ -26,8 +35,9 @@ mongoose.connect('mongodb://127.0.0.1:27017/collab-editor')
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: '*',
+    origin: ALLOWED_ORIGINS,
     methods: ['GET', 'POST'],
+    credentials: true,
   },
 });
 
