@@ -426,9 +426,37 @@ export default function EditorPage() {
         Y.applyUpdate(doc, new Uint8Array(update));
         const newValue = doc.getText('content').toString();
         setFileTree(prev => {
-          if (!prev[fileName]) return prev;
+          if (!prev[fileName]) {
+            // Race condition: sync-update arrived before tree-change.
+            // Create a minimal placeholder so the content is not lost.
+            const name = fileName.split('/').pop();
+            return {
+              ...prev,
+              [fileName]: { type: 'file', name, language: inferLanguage(name), value: newValue },
+            };
+          }
           return { ...prev, [fileName]: { ...prev[fileName], value: newValue } };
         });
+      }
+    });
+
+    // Full tree sync for late-joining guests ─────────────────────────────────
+    // The server sends this once on join when a room already has custom files.
+    socket.on('tree-init', (serverTree) => {
+      // Init Yjs docs for every new file received
+      Object.entries(serverTree).forEach(([p, n]) => {
+        if (n.type === 'file' && !yjsDocs.current.has(p)) {
+          yjsDocs.current.set(p, new Y.Doc());
+        }
+      });
+      // Merge server tree on top of the local default tree
+      setFileTree(prev => ({ ...prev, ...serverTree }));
+      // Auto-expand any folders that came in
+      const folders = Object.entries(serverTree)
+        .filter(([, n]) => n.type === 'folder')
+        .map(([p]) => p);
+      if (folders.length) {
+        setExpandedFolders(prev => new Set([...prev, ...folders]));
       }
     });
 

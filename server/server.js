@@ -47,6 +47,10 @@ const docs = new Map();
 // Room metadata: roomId -> { adminSocketId, members: Set<socketId> }
 const rooms = new Map();
 
+// Persisted file tree per room so late-joining guests see all created files
+// Structure: roomId -> { [filePath]: node }
+const fileTrees = new Map();
+
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
@@ -73,6 +77,12 @@ io.on('connection', (socket) => {
     const stateVector   = Y.encodeStateVector(doc);
     const stateAsUpdate = Y.encodeStateAsUpdate(doc);
     socket.emit('sync-step-1', stateVector, stateAsUpdate);
+
+    // Send the current file tree to the joining client so late-joiners
+    // see all files/folders created after the room was opened
+    if (fileTrees.has(roomId)) {
+      socket.emit('tree-init', fileTrees.get(roomId));
+    }
   });
 
   // ── Yjs sync ─────────────────────────────────────────────────────────────
@@ -94,7 +104,20 @@ io.on('connection', (socket) => {
   // ── File/folder tree structural changes (add / delete) ───────────────────
   // Payload: { op: 'add'|'delete', path, node?, extraPaths? }
   socket.on('tree-change', (roomId, payload) => {
-    // Just relay to all other clients in the room — no server-side state needed
+    // Persist the tree mutation so late-joining guests receive the full tree
+    if (!fileTrees.has(roomId)) fileTrees.set(roomId, {});
+    const tree = fileTrees.get(roomId);
+
+    if (payload.op === 'add') {
+      tree[payload.path] = payload.node;
+      if (payload.extraPaths) Object.assign(tree, payload.extraPaths);
+    } else if (payload.op === 'delete') {
+      Object.keys(tree).forEach(k => {
+        if (k === payload.path || k.startsWith(payload.path + '/')) delete tree[k];
+      });
+    }
+
+    // Relay to all other clients in the room
     socket.to(roomId).emit('tree-change', payload);
   });
 
@@ -141,8 +164,10 @@ io.on('connection', (socket) => {
           io.to(next).emit('room-role', { isAdmin: true });
           console.log(`New admin of ${roomId}: ${next}`);
         } else {
+          // Room is now empty — clean up all state
           rooms.delete(roomId);
           docs.delete(roomId);
+          fileTrees.delete(roomId);
         }
       }
     });
