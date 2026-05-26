@@ -7,6 +7,17 @@
 [![Three.js](https://img.shields.io/badge/Three.js-r184-black?style=for-the-badge&logo=three.js&logoColor=white)](https://threejs.org/)
 [![Yjs CRDT](https://img.shields.io/badge/Yjs-CRDT-orange?style=for-the-badge)](https://yjs.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://collabcode-3d.vercel.app)
+
+## 🌍 Live Demo
+
+| Service | URL |
+| :--- | :--- |
+| 🌐 **Frontend (Vercel)** | [https://collabcode-3d.vercel.app](https://collabcode-3d.vercel.app) |
+| ⚙️ **Backend (Railway)** | [https://collabcode-3d-backend-production.up.railway.app](https://collabcode-3d-backend-production.up.railway.app) |
+| 📦 **GitHub Repository** | [https://github.com/ashcodes2/CollabCode-3D](https://github.com/ashcodes2/CollabCode-3D) |
+
+---
 
 CollabCode 3D is a highly immersive, production-grade **3D Collaborative Code Editor**. It features an elegant real-time Monaco-based editor integrated with Yjs conflict-free replicated data types (CRDTs) alongside a breathtaking interactive 3D visual workspace where multiple developers can interact, visually coordinate, and pair program in a shared virtual room.
 
@@ -94,8 +105,8 @@ graph TD
 
 1. **Clone the Repository**
    ```bash
-   git clone <your-repository-url>
-   cd collaborative-code-editor
+   git clone https://github.com/ashcodes2/CollabCode-3D.git
+   cd CollabCode-3D
    ```
 
 2. **Install All Dependencies**
