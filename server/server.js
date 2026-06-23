@@ -41,16 +41,32 @@ const io = new Server(server, {
   },
 });
 
-// In-memory Yjs docs per room
-const docs = new Map();
-
+// ── Per-room state ────────────────────────────────────────────────────────────
 // Room metadata: roomId -> { adminSocketId, members: Set<socketId> }
 const rooms = new Map();
 
+// Per-room, per-file Yjs docs: roomId -> Map<filePath, Y.Doc>
+// This correctly isolates each file's collaborative state.
+const roomFileDocs = new Map();
+
 // Persisted file tree per room so late-joining guests see all created files
-// Structure: roomId -> { [filePath]: node }
+// Structure: roomId -> { [filePath]: node }  (node.value reflects latest content)
 const fileTrees = new Map();
 
+/** Get or create the per-file doc map for a room */
+function getRoomDocs(roomId) {
+  if (!roomFileDocs.has(roomId)) roomFileDocs.set(roomId, new Map());
+  return roomFileDocs.get(roomId);
+}
+
+/** Get or create a Y.Doc for a specific file in a room */
+function getFileDoc(roomId, fileName) {
+  const docs = getRoomDocs(roomId);
+  if (!docs.has(fileName)) docs.set(fileName, new Y.Doc());
+  return docs.get(fileName);
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 io.on('connection', (socket) => {
   console.log(`User connected: ${socket.id}`);
 
@@ -69,37 +85,70 @@ io.on('connection', (socket) => {
     const isAdmin = rooms.get(roomId).adminSocketId === socket.id;
     socket.emit('room-role', { isAdmin });
 
-    // Initialize Yjs doc for this room if it doesn't exist
-    if (!docs.has(roomId)) {
-      docs.set(roomId, new Y.Doc());
-    }
-    const doc = docs.get(roomId);
-    const stateVector   = Y.encodeStateVector(doc);
-    const stateAsUpdate = Y.encodeStateAsUpdate(doc);
-    socket.emit('sync-step-1', stateVector, stateAsUpdate);
+    // ── Send per-file Yjs state to the joining client ─────────────────────
+    // For each file the room knows about, send a sync-step-1 so the client
+    // can reconstruct the latest content for that specific file.
+    const docs = getRoomDocs(roomId);
+    docs.forEach((doc, fileName) => {
+      const stateAsUpdate = Y.encodeStateAsUpdate(doc);
+      if (stateAsUpdate.length > 0) {
+        socket.emit('sync-step-1', { fileName, update: Array.from(stateAsUpdate) });
+      }
+    });
 
     // Send the current file tree to the joining client so late-joiners
-    // see all files/folders created after the room was opened
+    // see all files/folders created after the room was opened.
+    // The tree nodes already have their latest `value` kept in sync below.
     if (fileTrees.has(roomId)) {
       socket.emit('tree-init', fileTrees.get(roomId));
     }
   });
 
   // ── Yjs sync ─────────────────────────────────────────────────────────────
-  // Payload: { fileName, update } tagged so receivers know which file changed
+  // Payload: { fileName, update }
   socket.on('sync-update', (roomId, payload) => {
-    const doc = docs.get(roomId);
-    if (doc) {
-      const updateArray = new Uint8Array(payload.update ?? payload);
-      try { Y.applyUpdate(doc, updateArray); } catch (_) {}
-      socket.to(roomId).emit('sync-update', payload);
+    const { fileName, update } = payload;
+    if (!fileName || !update) return;
+
+    // Apply to the server-side per-file doc so it tracks the latest state
+    const doc = getFileDoc(roomId, fileName);
+    const updateArray = new Uint8Array(update);
+    try {
+      Y.applyUpdate(doc, updateArray);
+    } catch (_) {}
+
+    // Keep the file tree value in sync so late-joining guests get fresh content.
+    // Also handles default files (index.html, style.css, script.js) that are
+    // never explicitly added via tree-change because they exist client-side by default.
+    if (!fileTrees.has(roomId)) fileTrees.set(roomId, {});
+    const tree = fileTrees.get(roomId);
+    const latestValue = doc.getText('content').toString();
+    if (tree[fileName]) {
+      tree[fileName] = { ...tree[fileName], value: latestValue };
+    } else {
+      // Default file — create a minimal record so guests receive it
+      const name = fileName.split('/').pop();
+      const extMap = { html: 'html', css: 'css', js: 'javascript', ts: 'typescript', json: 'json' };
+      const ext = name.split('.').pop();
+      tree[fileName] = { type: 'file', name, language: extMap[ext] ?? 'plaintext', value: latestValue };
     }
+
+    // Relay to all OTHER clients in the room
+    socket.to(roomId).emit('sync-update', payload);
   });
 
   // ── Awareness (cursors) ──────────────────────────────────────────────────
   socket.on('awareness-update', (roomId, awarenessUpdate) => {
     socket.to(roomId).emit('awareness-update', awarenessUpdate);
   });
+
+  // ── Mode change (web ↔ code) + language change ────────────────────────────
+  // Relay to all other clients so everyone stays in sync
+  socket.on('mode-change', (roomId, payload) => {
+    socket.to(roomId).emit('mode-change', payload);
+  });
+
+
 
   // ── File/folder tree structural changes (add / delete) ───────────────────
   // Payload: { op: 'add'|'delete', path, node?, extraPaths? }
@@ -111,9 +160,30 @@ io.on('connection', (socket) => {
     if (payload.op === 'add') {
       tree[payload.path] = payload.node;
       if (payload.extraPaths) Object.assign(tree, payload.extraPaths);
+
+      // Pre-initialise Yjs docs for new files so they are ready to receive updates
+      const docs = getRoomDocs(roomId);
+      const initDoc = (p, n) => {
+        if (n && n.type === 'file' && !docs.has(p)) {
+          const doc = new Y.Doc();
+          // Seed the doc with the initial value if present
+          if (n.value) {
+            doc.getText('content').insert(0, n.value);
+          }
+          docs.set(p, doc);
+        }
+      };
+      initDoc(payload.path, payload.node);
+      if (payload.extraPaths) {
+        Object.entries(payload.extraPaths).forEach(([p, n]) => initDoc(p, n));
+      }
     } else if (payload.op === 'delete') {
+      const docs = getRoomDocs(roomId);
       Object.keys(tree).forEach(k => {
-        if (k === payload.path || k.startsWith(payload.path + '/')) delete tree[k];
+        if (k === payload.path || k.startsWith(payload.path + '/')) {
+          delete tree[k];
+          if (docs.has(k)) { docs.get(k).destroy(); docs.delete(k); }
+        }
       });
     }
 
@@ -166,7 +236,9 @@ io.on('connection', (socket) => {
         } else {
           // Room is now empty — clean up all state
           rooms.delete(roomId);
-          docs.delete(roomId);
+          const docs = roomFileDocs.get(roomId);
+          if (docs) { docs.forEach(d => d.destroy()); }
+          roomFileDocs.delete(roomId);
           fileTrees.delete(roomId);
         }
       }

@@ -6,13 +6,282 @@ import {
   Code2, Settings, Globe, RefreshCw, Copy, Check,
   FileCode, FileText, Braces, FileCog, Trash2,
   ChevronDown, ChevronRight, FolderOpen, Folder,
-  FilePlus, FolderPlus,
+  FilePlus, FolderPlus, Play, Terminal as TerminalIcon,
+  Layout, ChevronUp, Clock, Cpu, AlertCircle,
 } from 'lucide-react';
 import * as Y from 'yjs';
 import { io } from 'socket.io-client';
 import '../index.css';
 
-// ── Starter content ───────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Multi-language definitions ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+export const LANGUAGES = [
+  // ── Web & Scripting ────────────────────────────────
+  {
+    key: 'javascript', label: 'JavaScript', ext: 'js',
+    monacoLang: 'javascript', color: '#f7df1e', bg: 'rgba(247,223,30,0.12)',
+    icon: '𝙅𝙎',
+    starter: `// JavaScript — Node.js ${new Date().getFullYear()}
+const readline = require('readline');
+const rl = readline.createInterface({ input: process.stdin });
+
+let lines = [];
+rl.on('line', l => lines.push(l.trim()));
+rl.on('close', () => {
+  console.log('Hello, World! 👋');
+  console.log('Lines received:', lines);
+});`,
+  },
+  {
+    key: 'typescript', label: 'TypeScript', ext: 'ts',
+    monacoLang: 'typescript', color: '#3178c6', bg: 'rgba(49,120,198,0.15)',
+    icon: '𝙏𝙎',
+    starter: `// TypeScript
+function greet(name: string): string {
+  return \`Hello, \${name}! 👋\`;
+}
+
+const message: string = greet('World');
+console.log(message);`,
+  },
+  {
+    key: 'python', label: 'Python', ext: 'py',
+    monacoLang: 'python', color: '#3572A5', bg: 'rgba(53,114,165,0.15)',
+    icon: '🐍',
+    starter: `# Python 3
+import sys
+
+def solve():
+    name = input("Enter name: ")
+    print(f"Hello, {name}! 👋")
+    
+solve()`,
+  },
+  {
+    key: 'ruby', label: 'Ruby', ext: 'rb',
+    monacoLang: 'ruby', color: '#cc342d', bg: 'rgba(204,52,45,0.12)',
+    icon: '💎',
+    starter: `# Ruby
+puts "Hello, World! 👋"
+name = gets&.chomp || "World"
+puts "Welcome, #{name}!"`,
+  },
+  {
+    key: 'php', label: 'PHP', ext: 'php',
+    monacoLang: 'php', color: '#777bb4', bg: 'rgba(119,123,180,0.15)',
+    icon: '🐘',
+    starter: `<?php
+// PHP 8
+$name = "World";
+echo "Hello, $name! 👋\n";
+
+$arr = [1, 2, 3, 4, 5];
+$sum = array_sum($arr);
+echo "Sum: $sum\n";`,
+  },
+  {
+    key: 'perl', label: 'Perl', ext: 'pl',
+    monacoLang: 'perl', color: '#0298c3', bg: 'rgba(2,152,195,0.12)',
+    icon: '🔮',
+    starter: `#!/usr/bin/perl
+use strict;
+use warnings;
+
+my $name = "World";
+print "Hello, $name! 👋\n";`,
+  },
+
+  // ── Systems / Compiled ─────────────────────────────
+  {
+    key: 'c', label: 'C', ext: 'c',
+    monacoLang: 'c', color: '#555555', bg: 'rgba(85,85,85,0.15)',
+    icon: '©',
+    starter: `#include <stdio.h>
+
+int main() {
+    printf("Hello, World! 👋\\n");
+    
+    int n;
+    scanf("%d", &n);
+    printf("You entered: %d\\n", n);
+    
+    return 0;
+}`,
+  },
+  {
+    key: 'cpp', label: 'C++', ext: 'cpp',
+    monacoLang: 'cpp', color: '#00599c', bg: 'rgba(0,89,156,0.15)',
+    icon: '⊕',
+    starter: `#include <bits/stdc++.h>
+using namespace std;
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+    
+    cout << "Hello, World! 👋" << endl;
+    
+    int n;
+    cin >> n;
+    cout << "You entered: " << n << endl;
+    
+    return 0;
+}`,
+  },
+  {
+    key: 'java', label: 'Java', ext: 'java',
+    monacoLang: 'java', color: '#b07219', bg: 'rgba(176,114,25,0.15)',
+    icon: '☕',
+    starter: `import java.util.Scanner;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World! 👋");
+        
+        Scanner sc = new Scanner(System.in);
+        if (sc.hasNextLine()) {
+            String name = sc.nextLine();
+            System.out.println("Welcome, " + name + "!");
+        }
+    }
+}`,
+  },
+  {
+    key: 'go', label: 'Go', ext: 'go',
+    monacoLang: 'go', color: '#00ADD8', bg: 'rgba(0,173,216,0.12)',
+    icon: '🐹',
+    starter: `package main
+
+import (
+	"bufio"
+	"fmt"
+	"os"
+)
+
+func main() {
+	fmt.Println("Hello, World! 👋")
+
+	scanner := bufio.NewScanner(os.Stdin)
+	if scanner.Scan() {
+		fmt.Printf("Hello, %s!\\n", scanner.Text())
+	}
+}`,
+  },
+  {
+    key: 'rust', label: 'Rust', ext: 'rs',
+    monacoLang: 'rust', color: '#dea584', bg: 'rgba(222,165,132,0.12)',
+    icon: '🦀',
+    starter: `use std::io::{self, BufRead};
+
+fn main() {
+    println!("Hello, World! 👋");
+
+    let stdin = io::stdin();
+    if let Some(Ok(line)) = stdin.lock().lines().next() {
+        println!("Hello, {}!", line);
+    }
+}`,
+  },
+  {
+    key: 'kotlin', label: 'Kotlin', ext: 'kt',
+    monacoLang: 'kotlin', color: '#A97BFF', bg: 'rgba(169,123,255,0.12)',
+    icon: '🎯',
+    starter: `fun main() {
+    println("Hello, World! 👋")
+    
+    val name = readLine() ?: "World"
+    println("Welcome, $name!")
+}`,
+  },
+  {
+    key: 'swift', label: 'Swift', ext: 'swift',
+    monacoLang: 'swift', color: '#F05138', bg: 'rgba(240,81,56,0.12)',
+    icon: '🐦',
+    starter: `import Foundation
+
+print("Hello, World! 👋")
+
+if let name = readLine() {
+    print("Welcome, \\(name)!")
+}`,
+  },
+  {
+    key: 'csharp', label: 'C#', ext: 'cs',
+    monacoLang: 'csharp', color: '#239120', bg: 'rgba(35,145,32,0.12)',
+    icon: '♯',
+    starter: `using System;
+
+class Program {
+    static void Main() {
+        Console.WriteLine("Hello, World! 👋");
+        
+        string name = Console.ReadLine() ?? "World";
+        Console.WriteLine($"Welcome, {name}!");
+    }
+}`,
+  },
+  {
+    key: 'scala', label: 'Scala', ext: 'scala',
+    monacoLang: 'scala', color: '#DC322F', bg: 'rgba(220,50,47,0.12)',
+    icon: '⚖️',
+    starter: `import scala.io.StdIn
+
+object Main extends App {
+  println("Hello, World! 👋")
+  
+  val name = StdIn.readLine()
+  if (name != null) println(s"Welcome, $name!")
+}`,
+  },
+
+  // ── Functional / Other ─────────────────────────────
+  {
+    key: 'haskell', label: 'Haskell', ext: 'hs',
+    monacoLang: 'haskell', color: '#5e5086', bg: 'rgba(94,80,134,0.15)',
+    icon: 'λ',
+    starter: `main :: IO ()
+main = do
+    putStrLn "Hello, World! 👋"
+    name <- getLine
+    putStrLn $ "Welcome, " ++ name ++ "!"`,
+  },
+  {
+    key: 'r', label: 'R', ext: 'r',
+    monacoLang: 'r', color: '#276dc3', bg: 'rgba(39,109,195,0.12)',
+    icon: '📊',
+    starter: `# R
+cat("Hello, World! 👋\n")
+name <- readLines(con = stdin(), n = 1)
+cat(paste("Welcome,", name, "!\n"))`,
+  },
+  {
+    key: 'bash', label: 'Bash', ext: 'sh',
+    monacoLang: 'shell', color: '#89e051', bg: 'rgba(137,224,81,0.10)',
+    icon: '$_',
+    starter: `#!/bin/bash
+echo "Hello, World! 👋"
+read -r name
+echo "Welcome, $name!"`,
+  },
+  {
+    key: 'sql', label: 'SQL', ext: 'sql',
+    monacoLang: 'sql', color: '#e38c00', bg: 'rgba(227,140,0,0.12)',
+    icon: '🗄️',
+    starter: `-- SQL (SQLite)
+CREATE TABLE users (id INTEGER PRIMARY KEY, name TEXT, age INTEGER);
+
+INSERT INTO users VALUES (1, 'Alice', 30);
+INSERT INTO users VALUES (2, 'Bob', 25);
+INSERT INTO users VALUES (3, 'Charlie', 35);
+
+SELECT name, age FROM users WHERE age > 27 ORDER BY age DESC;`,
+  },
+];
+
+const LANG_BY_KEY = Object.fromEntries(LANGUAGES.map(l => [l.key, l]));
+
+// ── Starter content (web mode) ─────────────────────────────────────────────
 const STARTER_HTML = (title = 'My Page') => `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -74,8 +343,6 @@ const STARTER_JS = `function greet() {
 }`;
 
 // ── Default flat-path tree (key = full path) ──────────────────────────────────
-// Folders: { type:'folder', name }
-// Files:   { type:'file', name, language, value }
 const DEFAULT_TREE = {
   'index.html': { type: 'file', name: 'index.html', language: 'html',       value: STARTER_HTML('CollabCode 3D') },
   'style.css':  { type: 'file', name: 'style.css',  language: 'css',        value: STARTER_CSS },
@@ -85,7 +352,11 @@ const DEFAULT_TREE = {
 // ── Pure helper functions ─────────────────────────────────────────────────────
 function inferLanguage(name) {
   const ext = name.split('.').pop();
-  return { html:'html', css:'css', js:'javascript', ts:'typescript', json:'json' }[ext] ?? 'plaintext';
+  return { html:'html', css:'css', js:'javascript', ts:'typescript', json:'json',
+           py:'python', rb:'ruby', php:'php', pl:'perl', c:'c', cpp:'cpp',
+           java:'java', go:'go', rs:'rust', kt:'kotlin', swift:'swift',
+           cs:'csharp', scala:'scala', hs:'haskell', r:'r', sh:'shell', sql:'sql',
+         }[ext] ?? 'plaintext';
 }
 
 function FileIcon({ name, size = 13 }) {
@@ -96,12 +367,8 @@ function FileIcon({ name, size = 13 }) {
   return <FileText size={size} color="#888" />;
 }
 
-/**
- * Resolve a relative href/src to an absolute tree key.
- * e.g. resolvePath('about', '../shared/reset.css') → 'shared/reset.css'
- */
 function resolvePath(folderPath, href) {
-  href = href.replace(/^\.\//, ''); // strip leading ./
+  href = href.replace(/^\.\//, '');
   if (href.startsWith('../')) {
     const parts = folderPath.split('/').filter(Boolean);
     parts.pop();
@@ -111,12 +378,6 @@ function resolvePath(folderPath, href) {
   return folderPath ? `${folderPath}/${href}` : href;
 }
 
-/**
- * Build the srcdoc for the iframe.
- * Inlines all <link href="*.css"> and <script src="*.js"> found in the
- * selected HTML file, resolving paths relative to that file's folder.
- * This avoids any cross-origin / blob-URL issues with the sandbox.
- */
 function buildSrcDoc(tree, previewPath) {
   const htmlNode = tree[previewPath];
   if (!htmlNode || htmlNode.type !== 'file') return '';
@@ -126,7 +387,6 @@ function buildSrcDoc(tree, previewPath) {
 
   let html = htmlNode.value ?? '';
 
-  // Inline <link rel="stylesheet" href="*.css">
   html = html.replace(
     /<link([^>]*)href=["']([^"']+\.css)["']([^>]*)>/gi,
     (_m, a, href, b) => {
@@ -135,7 +395,6 @@ function buildSrcDoc(tree, previewPath) {
     }
   );
 
-  // Inline <script src="*.js"></script>
   html = html.replace(
     /<script([^>]*)src=["']([^"']+\.js)["']([^>]*)><\/script>/gi,
     (_m, a, src, b) => {
@@ -147,10 +406,6 @@ function buildSrcDoc(tree, previewPath) {
   return html;
 }
 
-/**
- * Return direct children of `prefix` in the flat tree, sorted
- * folders-first then alphabetically.
- */
 function getChildren(tree, prefix) {
   return Object.entries(tree)
     .filter(([path]) => {
@@ -165,7 +420,6 @@ function getChildren(tree, prefix) {
     });
 }
 
-/** Create the three starter files for a brand-new folder. */
 function starterFiles(folderPath) {
   const name = folderPath.split('/').pop();
   return {
@@ -220,7 +474,6 @@ function TreeNode({
 }) {
   const indent = level * 14;
 
-  // ── FOLDER ──────────────────────────────────────────────────────────────
   if (node.type === 'folder') {
     const isOpen = expandedFolders.has(path);
     const children = getChildren(tree, path);
@@ -246,7 +499,6 @@ function TreeNode({
           <span style={{ flex:1, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
             {node.name}
           </span>
-          {/* Folder action buttons */}
           <button onClick={e=>{ e.stopPropagation(); onAddFile(path); }}
             title="New file in folder"
             style={btnStyle} onMouseEnter={hoverOn('#c084fc')} onMouseLeave={hoverOff}>
@@ -274,7 +526,6 @@ function TreeNode({
     );
   }
 
-  // ── FILE ────────────────────────────────────────────────────────────────
   const isActive  = activeFilePath  === path;
   const isPreview = previewFilePath === path;
   const isHtml    = node.name.endsWith('.html');
@@ -299,7 +550,6 @@ function TreeNode({
         {node.name}
       </span>
 
-      {/* Set-as-preview button (HTML files only) */}
       {isHtml && (
         <button
           title="Set as live preview"
@@ -327,7 +577,6 @@ function TreeNode({
   );
 }
 
-// Tiny shared styles for icon-buttons in the tree
 const btnStyle = {
   background:'transparent', border:'none', cursor:'pointer',
   color:'rgba(255,255,255,0.2)', display:'flex', padding:'1px', flexShrink:0,
@@ -335,7 +584,211 @@ const btnStyle = {
 const hoverOn  = color => e => { e.currentTarget.style.color = color; };
 const hoverOff = e => { e.currentTarget.style.color = 'rgba(255,255,255,0.2)'; };
 
-// ════════════════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Language Selector Dropdown ────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+function LanguageSelector({ currentLang, onChange, disabled }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef(null);
+  const lang = LANG_BY_KEY[currentLang] ?? LANGUAGES[0];
+
+  useEffect(() => {
+    const handler = e => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const groups = [
+    { label: 'Web & Scripting', keys: ['javascript','typescript','python','ruby','php','perl'] },
+    { label: 'Systems', keys: ['c','cpp','java','go','rust','kotlin','swift','csharp','scala'] },
+    { label: 'Other', keys: ['haskell','r','bash','sql'] },
+  ];
+
+  return (
+    <div ref={ref} style={{ position: 'relative', userSelect: 'none' }}>
+      <button
+        onClick={() => !disabled && setOpen(o => !o)}
+        disabled={disabled}
+        style={{
+          display: 'flex', alignItems: 'center', gap: '8px',
+          padding: '6px 12px', borderRadius: '8px', cursor: disabled ? 'default' : 'pointer',
+          background: lang.bg, border: `1px solid ${lang.color}44`,
+          color: '#fff', fontSize: '0.82rem', fontWeight: '700',
+          transition: 'all 0.2s', minWidth: '145px',
+        }}
+      >
+        <span style={{ fontSize: '1rem', lineHeight: 1 }}>{lang.icon}</span>
+        <span style={{ flex: 1 }}>{lang.label}</span>
+        <ChevronDown size={13} style={{ opacity: 0.6, transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+      </button>
+
+      {open && (
+        <div style={{
+          position: 'absolute', top: '110%', left: 0, zIndex: 9999,
+          background: '#111118', border: '1px solid rgba(255,255,255,0.12)',
+          borderRadius: '12px', padding: '8px', minWidth: '220px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.7)',
+          maxHeight: '420px', overflowY: 'auto',
+        }}>
+          {groups.map(group => (
+            <div key={group.label}>
+              <div style={{
+                fontSize: '0.62rem', fontWeight: '700', letterSpacing: '0.1em',
+                color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase',
+                padding: '6px 10px 3px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                marginBottom: '4px',
+              }}>{group.label}</div>
+              {group.keys.map(key => {
+                const l = LANG_BY_KEY[key];
+                const isActive = key === currentLang;
+                return (
+                  <div
+                    key={key}
+                    onClick={() => { onChange(key); setOpen(false); }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '10px',
+                      padding: '7px 10px', borderRadius: '7px', cursor: 'pointer',
+                      background: isActive ? `${l.color}22` : 'transparent',
+                      border: isActive ? `1px solid ${l.color}44` : '1px solid transparent',
+                      marginBottom: '2px', transition: 'background 0.15s',
+                    }}
+                    onMouseEnter={e => { if (!isActive) e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; }}
+                    onMouseLeave={e => { if (!isActive) e.currentTarget.style.background = 'transparent'; }}
+                  >
+                    <span style={{ fontSize: '0.9rem', width: '22px', textAlign: 'center' }}>{l.icon}</span>
+                    <span style={{ fontSize: '0.83rem', color: isActive ? l.color : 'rgba(255,255,255,0.75)', fontWeight: isActive ? '700' : '400' }}>
+                      {l.label}
+                    </span>
+                    <span style={{ marginLeft: 'auto', fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', fontFamily: 'monospace' }}>
+                      .{l.ext}
+                    </span>
+                  </div>
+                );
+              })}
+              <div style={{ height: '6px' }} />
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Code-mode Terminal / Output Panel ────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
+function OutputPanel({ output, isRunning, onRun, stdin, onStdinChange, cpuTime, memory, canEdit }) {
+  const endRef = useRef(null);
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [output]);
+
+  const hasOutput = output !== null;
+
+  return (
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100%',
+      background: '#0d0d0d', fontFamily: "'JetBrains Mono', Consolas, monospace",
+      fontSize: '13px', overflow: 'hidden',
+    }}>
+      {/* ── Header bar ── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '8px 14px', background: '#141414',
+        borderBottom: '1px solid rgba(255,255,255,0.07)', flexShrink: 0,
+      }}>
+        <TerminalIcon size={14} color="#4ade80" />
+        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Output
+        </span>
+        <div style={{ flex: 1 }} />
+        {cpuTime && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>
+            <Clock size={11} /> {cpuTime}s
+          </span>
+        )}
+        {memory && (
+          <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.7rem', color: 'rgba(255,255,255,0.3)' }}>
+            <Cpu size={11} /> {memory}KB
+          </span>
+        )}
+        {canEdit && (
+          <button
+            onClick={onRun}
+            disabled={isRunning}
+            id="run-code-btn"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '5px 14px', borderRadius: '6px', border: 'none', cursor: isRunning ? 'not-allowed' : 'pointer',
+              background: isRunning ? 'rgba(74,222,128,0.1)' : 'linear-gradient(135deg, #22c55e, #16a34a)',
+              color: isRunning ? '#4ade80' : '#fff', fontWeight: '700', fontSize: '0.8rem',
+              fontFamily: 'inherit', transition: 'all 0.2s',
+              boxShadow: isRunning ? 'none' : '0 4px 12px rgba(34,197,94,0.35)',
+            }}
+          >
+            {isRunning
+              ? <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>↻</span>
+              : <Play size={12} fill="currentColor" />}
+            {isRunning ? 'Running…' : 'Run Code'}
+          </button>
+        )}
+      </div>
+
+      {/* ── Stdin row ── */}
+      {canEdit && (
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', gap: '10px',
+          padding: '8px 14px', background: '#111',
+          borderBottom: '1px solid rgba(255,255,255,0.06)', flexShrink: 0,
+        }}>
+          <span style={{ fontSize: '0.68rem', fontWeight: '700', color: 'rgba(255,255,255,0.3)',
+            textTransform: 'uppercase', letterSpacing: '0.08em', paddingTop: '4px', whiteSpace: 'nowrap' }}>
+            stdin
+          </span>
+          <textarea
+            value={stdin}
+            onChange={e => onStdinChange(e.target.value)}
+            placeholder="Provide input here (one value per line)…"
+            rows={2}
+            style={{
+              flex: 1, background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.09)', borderRadius: '6px',
+              color: '#4ade80', fontFamily: 'inherit', fontSize: '12px',
+              padding: '5px 8px', outline: 'none', resize: 'none',
+              lineHeight: '1.5', caretColor: '#4ade80',
+            }}
+          />
+        </div>
+      )}
+
+      {/* ── Output area ── */}
+      <div style={{ flex: 1, overflowY: 'auto', padding: '12px 16px' }}>
+        {!hasOutput && !isRunning && (
+          <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '0.82rem', marginTop: '8px' }}>
+            Click <strong style={{ color: '#4ade80' }}>Run Code</strong> to execute your program…
+          </div>
+        )}
+        {isRunning && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#60a5fa', fontSize: '0.82rem' }}>
+            <span style={{ display: 'inline-block', animation: 'spin 0.8s linear infinite' }}>↻</span>
+            Executing on JDoodle sandbox…
+          </div>
+        )}
+        {hasOutput && !isRunning && (
+          <pre style={{
+            color: '#d4d4d4', whiteSpace: 'pre-wrap', wordBreak: 'break-word',
+            margin: 0, lineHeight: '1.6', fontSize: '13px',
+          }}>
+            {output}
+          </pre>
+        )}
+        <div ref={endRef} />
+      </div>
+    </div>
+  );
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// ── Main EditorPage ───────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════════
 export default function EditorPage() {
   // ── Room & permission ─────────────────────────────────────────────────────
   const [roomId] = useState(() => {
@@ -359,42 +812,56 @@ export default function EditorPage() {
     setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 4000);
   }, []);
 
+  // ── Editor mode: 'web' | 'code' ───────────────────────────────────────────
+  const [editorMode, setEditorMode] = useState('web');
+
+  // ── Multi-language code mode state ───────────────────────────────────────
+  const [selectedLang,   setSelectedLang]   = useState('javascript');
+  const [codeContent,    setCodeContent]    = useState(() => LANG_BY_KEY['javascript'].starter);
+  const [stdinValue,     setStdinValue]     = useState('');
+  const [codeOutput,     setCodeOutput]     = useState(null);
+  const [isRunning,      setIsRunning]      = useState(false);
+  const [runMeta,        setRunMeta]        = useState({ cpuTime: null, memory: null });
+
+  // Code mode file key (virtual — stored in fileTree for sync)
+  const codeModeKey = useCallback(lang => `__code__/main.${LANG_BY_KEY[lang]?.ext ?? 'txt'}`, []);
+
   // ── File tree state ───────────────────────────────────────────────────────
   const [fileTree,        setFileTree]        = useState(DEFAULT_TREE);
   const [activeFilePath,  setActiveFilePath]  = useState('index.html');
   const [previewFilePath, setPreviewFilePath] = useState('index.html');
   const [expandedFolders, setExpandedFolders] = useState(new Set());
 
-  // New-item creation form state
   const [newItem, setNewItem] = useState({ visible:false, parent:'', type:'file', name:'' });
   const newItemRef = useRef(null);
 
   // ── Yjs / Socket refs ─────────────────────────────────────────────────────
-  const yjsDocs  = useRef(new Map());   // path → Y.Doc
+  const yjsDocs   = useRef(new Map());
   const socketRef = useRef(null);
 
   // ── Layout ────────────────────────────────────────────────────────────────
-  const [splitPct,  setSplitPct]  = useState(50);
+  const [splitPct,  setSplitPct]  = useState(55);
   const isDragging  = useRef(false);
   const containerRef = useRef(null);
   const SIDEBAR_W = 210;
 
   // ── Header misc ───────────────────────────────────────────────────────────
-  const [copied, setCopied] = useState(false);
+  const [copied,  setCopied]  = useState(false);
   const [srcDoc,  setSrcDoc]  = useState('');
 
-  // ── Live preview: rebuild whenever tree or preview path changes ───────────
+  // ── Live preview ──────────────────────────────────────────────────────────
   useEffect(() => {
+    if (editorMode !== 'web') return;
     const t = setTimeout(() => setSrcDoc(buildSrcDoc(fileTree, previewFilePath)), 300);
     return () => clearTimeout(t);
-  }, [fileTree, previewFilePath]);
+  }, [fileTree, previewFilePath, editorMode]);
 
   // ── Socket.io + Yjs bootstrap ─────────────────────────────────────────────
   useEffect(() => {
     const socket = io(import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001');
     socketRef.current = socket;
 
-    // Pre-init Yjs docs for all default files
+    // Pre-init Yjs docs for default web files
     Object.keys(DEFAULT_TREE).forEach(p => {
       if (!yjsDocs.current.has(p)) yjsDocs.current.set(p, new Y.Doc());
     });
@@ -412,23 +879,53 @@ export default function EditorPage() {
       }
     });
 
-    // Full-state sync on join
-    socket.on('sync-step-1', (_sv, stateAsUpdate) => {
-      yjsDocs.current.forEach(doc => {
-        try { Y.applyUpdate(doc, new Uint8Array(stateAsUpdate)); } catch (_) {}
-      });
-    });
-
-    // Incremental content update for a specific file
-    socket.on('sync-update', ({ fileName, update }) => {
+    // Per-file state sync on join (server sends one event per file)
+    socket.on('sync-step-1', ({ fileName, update }) => {
+      if (!fileName || !update) return;
+      if (!yjsDocs.current.has(fileName)) yjsDocs.current.set(fileName, new Y.Doc());
       const doc = yjsDocs.current.get(fileName);
-      if (doc) {
+      try {
         Y.applyUpdate(doc, new Uint8Array(update));
         const newValue = doc.getText('content').toString();
+        if (newValue) {
+          // Handle code mode virtual files
+          if (fileName.startsWith('__code__/')) {
+            const ext = fileName.split('.').pop();
+            const langKey = LANGUAGES.find(l => l.ext === ext)?.key ?? 'javascript';
+            setSelectedLang(langKey);
+            setCodeContent(newValue);
+          }
+          setFileTree(prev => {
+            if (!prev[fileName]) {
+              const name = fileName.split('/').pop();
+              return {
+                ...prev,
+                [fileName]: { type: 'file', name, language: inferLanguage(name), value: newValue },
+              };
+            }
+            return { ...prev, [fileName]: { ...prev[fileName], value: newValue } };
+          });
+        }
+      } catch (_) {}
+    });
+
+    // Incremental content update
+    socket.on('sync-update', ({ fileName, update }) => {
+      if (!fileName || !update) return;
+      if (!yjsDocs.current.has(fileName)) yjsDocs.current.set(fileName, new Y.Doc());
+      const doc = yjsDocs.current.get(fileName);
+      try {
+        Y.applyUpdate(doc, new Uint8Array(update));
+        const newValue = doc.getText('content').toString();
+        // Handle code mode virtual files
+        if (fileName.startsWith('__code__/')) {
+          const ext = fileName.split('.').pop();
+          const langKey = LANGUAGES.find(l => l.ext === ext)?.key ?? 'javascript';
+          setSelectedLang(langKey);
+          setCodeContent(newValue);
+        }
         setFileTree(prev => {
           if (!prev[fileName]) {
-            // Race condition: sync-update arrived before tree-change.
-            // Create a minimal placeholder so the content is not lost.
             const name = fileName.split('/').pop();
             return {
               ...prev,
@@ -437,21 +934,34 @@ export default function EditorPage() {
           }
           return { ...prev, [fileName]: { ...prev[fileName], value: newValue } };
         });
-      }
+      } catch (_) {}
     });
 
-    // Full tree sync for late-joining guests ─────────────────────────────────
-    // The server sends this once on join when a room already has custom files.
+    // Full tree sync for late-joining guests
     socket.on('tree-init', (serverTree) => {
-      // Init Yjs docs for every new file received
       Object.entries(serverTree).forEach(([p, n]) => {
-        if (n.type === 'file' && !yjsDocs.current.has(p)) {
-          yjsDocs.current.set(p, new Y.Doc());
+        if (n.type === 'file') {
+          if (!yjsDocs.current.has(p)) {
+            const doc = new Y.Doc();
+            if (n.value) {
+              const yText = doc.getText('content');
+              if (yText.length === 0) {
+                doc.transact(() => { yText.insert(0, n.value); });
+              }
+            }
+            yjsDocs.current.set(p, doc);
+          }
+          // Restore code mode state from server tree
+          if (p.startsWith('__code__/') && n.value) {
+            const ext = p.split('.').pop();
+            const langKey = LANGUAGES.find(l => l.ext === ext)?.key ?? 'javascript';
+            setSelectedLang(langKey);
+            setCodeContent(n.value);
+            setEditorMode('code');
+          }
         }
       });
-      // Merge server tree on top of the local default tree
       setFileTree(prev => ({ ...prev, ...serverTree }));
-      // Auto-expand any folders that came in
       const folders = Object.entries(serverTree)
         .filter(([, n]) => n.type === 'folder')
         .map(([p]) => p);
@@ -460,10 +970,9 @@ export default function EditorPage() {
       }
     });
 
-    // Tree structure change: another client added or deleted a file/folder
+    // Tree structure change
     socket.on('tree-change', ({ op, path, node, extraPaths }) => {
       if (op === 'add') {
-        // Init Yjs docs for any new files
         if (node?.type === 'file' && !yjsDocs.current.has(path)) {
           yjsDocs.current.set(path, new Y.Doc());
         }
@@ -489,6 +998,12 @@ export default function EditorPage() {
       }
     });
 
+    // ── Mode sync: when admin switches mode, guests follow ─────────────────
+    socket.on('mode-change', ({ mode, lang }) => {
+      setEditorMode(mode);
+      if (lang) setSelectedLang(lang);
+    });
+
     // Permission events
     socket.on('edit-request', req  => setIncomingRequests(p => [...p, req]));
     socket.on('edit-granted',  ()  => {
@@ -508,16 +1023,18 @@ export default function EditorPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
-  // ── Yjs update → broadcast whenever active file changes ──────────────────
+  // ── Yjs update → broadcast (web mode: active file; code mode: code key) ───
+  const activeSyncKey = editorMode === 'code' ? codeModeKey(selectedLang) : activeFilePath;
+
   useEffect(() => {
-    if (!yjsDocs.current.has(activeFilePath)) {
-      yjsDocs.current.set(activeFilePath, new Y.Doc());
+    if (!yjsDocs.current.has(activeSyncKey)) {
+      yjsDocs.current.set(activeSyncKey, new Y.Doc());
     }
-    const doc = yjsDocs.current.get(activeFilePath);
+    const doc = yjsDocs.current.get(activeSyncKey);
     const onUpdate = update => {
       if (socketRef.current?.connected) {
         socketRef.current.emit('sync-update', roomId, {
-          fileName: activeFilePath,
+          fileName: activeSyncKey,
           update: Array.from(update),
         });
       }
@@ -525,23 +1042,77 @@ export default function EditorPage() {
     doc.on('update', onUpdate);
     return () => doc.off('update', onUpdate);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFilePath, roomId]);
+  }, [activeSyncKey, roomId]);
 
-  // ── Editor change → Yjs doc + local state ────────────────────────────────
+  // ── Editor change → Yjs + local state ────────────────────────────────────
   const handleEditorChange = useCallback(val => {
     const newVal = val ?? '';
-    setFileTree(prev => ({
-      ...prev,
-      [activeFilePath]: { ...prev[activeFilePath], value: newVal },
-    }));
-    const doc = yjsDocs.current.get(activeFilePath);
+    if (editorMode === 'code') {
+      setCodeContent(newVal);
+    } else {
+      setFileTree(prev => ({
+        ...prev,
+        [activeFilePath]: { ...prev[activeFilePath], value: newVal },
+      }));
+    }
+    const doc = yjsDocs.current.get(activeSyncKey);
     if (doc) {
       const yText = doc.getText('content');
       if (yText.toString() !== newVal) {
         doc.transact(() => { yText.delete(0, yText.length); yText.insert(0, newVal); });
       }
     }
-  }, [activeFilePath]);
+  }, [activeFilePath, activeSyncKey, editorMode]);
+
+  // ── Language change in code mode ──────────────────────────────────────────
+  const handleLangChange = useCallback(newKey => {
+    const lang = LANG_BY_KEY[newKey];
+    if (!lang) return;
+    setSelectedLang(newKey);
+    // Reset code content to that language's starter
+    setCodeContent(lang.starter);
+    setCodeOutput(null);
+    setRunMeta({ cpuTime: null, memory: null });
+    // Init new Yjs doc for new language file key
+    const key = codeModeKey(newKey);
+    if (!yjsDocs.current.has(key)) yjsDocs.current.set(key, new Y.Doc());
+    // Broadcast language change so guests follow
+    socketRef.current?.emit('mode-change', roomId, { mode: 'code', lang: newKey });
+  }, [codeModeKey, roomId]);
+
+  // ── Mode switch ───────────────────────────────────────────────────────────
+  const handleModeSwitch = useCallback(mode => {
+    setEditorMode(mode);
+    setCodeOutput(null);
+    socketRef.current?.emit('mode-change', roomId, { mode, lang: selectedLang });
+  }, [roomId, selectedLang]);
+
+  // ── Run code ──────────────────────────────────────────────────────────────
+  const handleRunCode = useCallback(async () => {
+    if (isRunning) return;
+    setIsRunning(true);
+    setCodeOutput(null);
+    setRunMeta({ cpuTime: null, memory: null });
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+      const res = await fetch(`${backendUrl}/api/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          language: selectedLang,
+          sourceCode: codeContent,
+          stdin: stdinValue,
+        }),
+      });
+      const data = await res.json();
+      setCodeOutput(data.run?.output ?? 'No output.');
+      setRunMeta({ cpuTime: data.run?.cpuTime ?? null, memory: data.run?.memory ?? null });
+    } catch (err) {
+      setCodeOutput(`❌ Network error: ${err.message}`);
+    } finally {
+      setIsRunning(false);
+    }
+  }, [isRunning, selectedLang, codeContent, stdinValue]);
 
   // ── File tree operations ──────────────────────────────────────────────────
   const handleFileClick  = useCallback(path => setActiveFilePath(path), []);
@@ -556,7 +1127,6 @@ export default function EditorPage() {
   }, []);
 
   const handleDeleteItem = useCallback(path => {
-    // Fall back to first remaining file if the active one is deleted
     if (activeFilePath === path || activeFilePath.startsWith(path + '/')) {
       const remaining = Object.entries(fileTree).find(
         ([k, n]) => k !== path && !k.startsWith(path + '/') && n.type === 'file'
@@ -579,7 +1149,6 @@ export default function EditorPage() {
     socketRef.current?.emit('tree-change', roomId, { op:'delete', path });
   }, [activeFilePath, previewFilePath, fileTree, roomId]);
 
-  // Open new-item form (called from sidebar header or folder row)
   const openNewItemForm = useCallback((type, parent = '') => {
     setNewItem({ visible:true, parent, type, name:'' });
     if (parent) setExpandedFolders(prev => new Set([...prev, parent]));
@@ -591,7 +1160,7 @@ export default function EditorPage() {
     const trimmed = name.trim();
     if (!trimmed) { setNewItem({ visible:false, parent:'', type:'file', name:'' }); return; }
     const fullPath = parent ? `${parent}/${trimmed}` : trimmed;
-    if (fileTree[fullPath]) return; // already exists
+    if (fileTree[fullPath]) return;
 
     if (type === 'folder') {
       const folderNode = { type:'folder', name: trimmed };
@@ -673,13 +1242,13 @@ export default function EditorPage() {
     setTimeout(() => setSrcDoc(buildSrcDoc(fileTree, previewFilePath)), 60);
   };
 
-  const activeFileNode = fileTree[activeFilePath];
+  const activeFileNode = editorMode === 'web' ? fileTree[activeFilePath] : null;
   const rootChildren   = getChildren(fileTree, '');
+  const pathParts      = activeFilePath.split('/');
+  const fileName       = pathParts.pop();
+  const dirPart        = pathParts.join('/');
 
-  // Breadcrumb for the active tab
-  const pathParts = activeFilePath.split('/');
-  const fileName  = pathParts.pop();
-  const dirPart   = pathParts.join('/');
+  const currentLangDef = LANG_BY_KEY[selectedLang] ?? LANGUAGES[0];
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -692,6 +1261,10 @@ export default function EditorPage() {
         }
         .tree-scroll::-webkit-scrollbar { width: 4px; }
         .tree-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+        .output-scroll::-webkit-scrollbar { width: 5px; }
+        .output-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
+        .mode-btn { transition: all 0.2s; }
+        .mode-btn:hover { transform: translateY(-1px); }
       `}</style>
 
       {/* ── Header ── */}
@@ -700,7 +1273,51 @@ export default function EditorPage() {
           <Code2 size={22} color="#6366f1" />
           <span>CollabCode 3D</span>
         </Link>
+
+        {/* ── Mode Toggle (Web / Code) ── */}
+        <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.05)', padding: '3px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <button
+            className="mode-btn"
+            onClick={() => handleModeSwitch('web')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '5px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+              background: editorMode === 'web' ? 'linear-gradient(135deg,rgba(99,102,241,0.4),rgba(168,85,247,0.35))' : 'transparent',
+              color: editorMode === 'web' ? '#fff' : 'rgba(255,255,255,0.4)',
+              fontWeight: '600', fontSize: '0.78rem',
+              boxShadow: editorMode === 'web' ? '0 2px 8px rgba(99,102,241,0.3)' : 'none',
+              border: editorMode === 'web' ? '1px solid rgba(99,102,241,0.4)' : '1px solid transparent',
+            }}
+          >
+            <Layout size={13} /> Web
+          </button>
+          <button
+            className="mode-btn"
+            onClick={() => handleModeSwitch('code')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '5px 12px', borderRadius: '6px', border: 'none', cursor: 'pointer',
+              background: editorMode === 'code' ? `linear-gradient(135deg,${currentLangDef.bg},rgba(34,197,94,0.15))` : 'transparent',
+              color: editorMode === 'code' ? '#fff' : 'rgba(255,255,255,0.4)',
+              fontWeight: '600', fontSize: '0.78rem',
+              boxShadow: editorMode === 'code' ? '0 2px 8px rgba(34,197,94,0.2)' : 'none',
+              border: editorMode === 'code' ? `1px solid ${currentLangDef.color}44` : '1px solid transparent',
+            }}
+          >
+            <TerminalIcon size={13} /> Code
+          </button>
+        </div>
+
         <div style={{ display:'flex', gap:'10px', alignItems:'center' }}>
+          {/* Language selector (code mode only) */}
+          {editorMode === 'code' && (
+            <LanguageSelector
+              currentLang={selectedLang}
+              onChange={handleLangChange}
+              disabled={!canEdit}
+            />
+          )}
+
           {isAdmin && (
             <span style={{ padding:'4px 12px', borderRadius:'20px', fontSize:'0.72rem', fontWeight:'700', background:'rgba(99,102,241,0.15)', border:'1px solid rgba(99,102,241,0.4)', color:'#818cf8', display:'flex', alignItems:'center', gap:'5px' }}>
               👑 Admin
@@ -771,90 +1388,154 @@ export default function EditorPage() {
       {/* ── Main layout ── */}
       <main ref={containerRef} style={{ display:'flex', flex:1, padding:'8px', gap:'0', overflow:'hidden' }}>
 
-        {/* ── SIDEBAR ── */}
-        <div style={{ width:`${SIDEBAR_W}px`, flexShrink:0, marginRight:'8px', background:'rgba(0,0,0,0.12)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'12px', display:'flex', flexDirection:'column', overflow:'hidden' }}>
+        {/* ── SIDEBAR (web mode only) ── */}
+        {editorMode === 'web' && (
+          <div style={{ width:`${SIDEBAR_W}px`, flexShrink:0, marginRight:'8px', background:'rgba(0,0,0,0.12)', backdropFilter:'blur(10px)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'12px', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
-          {/* Sidebar header */}
-          <div style={{ padding:'8px 10px', fontSize:'0.61rem', fontWeight:'700', textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.35)', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
-            <span style={{ display:'flex', alignItems:'center', gap:'5px' }}>
-              <ChevronDown size={11}/> Explorer
-            </span>
-            <div style={{ display:'flex', gap:'3px' }}>
-              <button title="New File" onClick={() => openNewItemForm('file', '')}
-                style={{ background:'transparent', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', display:'flex', padding:'2px 3px', borderRadius:'3px' }}
-                onMouseEnter={e=>{ e.currentTarget.style.color='#c084fc'; e.currentTarget.style.background='rgba(255,255,255,0.06)'; }}
-                onMouseLeave={e=>{ e.currentTarget.style.color='rgba(255,255,255,0.4)'; e.currentTarget.style.background='transparent'; }}>
-                <FilePlus size={13}/>
-              </button>
-              <button title="New Folder" onClick={() => openNewItemForm('folder', '')}
-                style={{ background:'transparent', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', display:'flex', padding:'2px 3px', borderRadius:'3px' }}
-                onMouseEnter={e=>{ e.currentTarget.style.color='#fbbf24'; e.currentTarget.style.background='rgba(255,255,255,0.06)'; }}
-                onMouseLeave={e=>{ e.currentTarget.style.color='rgba(255,255,255,0.4)'; e.currentTarget.style.background='transparent'; }}>
-                <FolderPlus size={13}/>
-              </button>
+            <div style={{ padding:'8px 10px', fontSize:'0.61rem', fontWeight:'700', textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.35)', borderBottom:'1px solid rgba(255,255,255,0.06)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0 }}>
+              <span style={{ display:'flex', alignItems:'center', gap:'5px' }}>
+                <ChevronDown size={11}/> Explorer
+              </span>
+              <div style={{ display:'flex', gap:'3px' }}>
+                <button title="New File" onClick={() => openNewItemForm('file', '')}
+                  style={{ background:'transparent', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', display:'flex', padding:'2px 3px', borderRadius:'3px' }}
+                  onMouseEnter={e=>{ e.currentTarget.style.color='#c084fc'; e.currentTarget.style.background='rgba(255,255,255,0.06)'; }}
+                  onMouseLeave={e=>{ e.currentTarget.style.color='rgba(255,255,255,0.4)'; e.currentTarget.style.background='transparent'; }}>
+                  <FilePlus size={13}/>
+                </button>
+                <button title="New Folder" onClick={() => openNewItemForm('folder', '')}
+                  style={{ background:'transparent', border:'none', cursor:'pointer', color:'rgba(255,255,255,0.4)', display:'flex', padding:'2px 3px', borderRadius:'3px' }}
+                  onMouseEnter={e=>{ e.currentTarget.style.color='#fbbf24'; e.currentTarget.style.background='rgba(255,255,255,0.06)'; }}
+                  onMouseLeave={e=>{ e.currentTarget.style.color='rgba(255,255,255,0.4)'; e.currentTarget.style.background='transparent'; }}>
+                  <FolderPlus size={13}/>
+                </button>
+              </div>
+            </div>
+
+            {newItem.visible && (
+              <div style={{ padding:'6px 10px', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', alignItems:'center', gap:'5px', flexShrink:0, background:'rgba(99,102,241,0.06)' }}>
+                {newItem.type === 'folder'
+                  ? <Folder   size={12} color="#fbbf24"/>
+                  : <FileText size={12} color="#888"/>}
+                <input
+                  ref={newItemRef}
+                  value={newItem.name}
+                  onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter')  handleCreateItem();
+                    if (e.key === 'Escape') setNewItem({ visible:false, parent:'', type:'file', name:'' });
+                  }}
+                  placeholder={newItem.type === 'folder' ? 'folder-name' : 'filename.html'}
+                  style={{ flex:1, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(99,102,241,0.5)', borderRadius:'4px', color:'#fff', padding:'3px 7px', fontSize:'0.78rem', outline:'none', fontFamily:'inherit', boxSizing:'border-box', minWidth:0 }}
+                />
+                {newItem.parent && (
+                  <span style={{ fontSize:'0.62rem', color:'rgba(255,255,255,0.3)', flexShrink:0 }}>in {newItem.parent}</span>
+                )}
+              </div>
+            )}
+
+            <div className="tree-scroll" style={{ flex:1, overflowY:'auto' }}>
+              {rootChildren.map(([path, node]) => (
+                <TreeNode
+                  key={path}
+                  path={path} node={node} tree={fileTree} level={0}
+                  activeFilePath={activeFilePath} previewFilePath={previewFilePath}
+                  onFileClick={handleFileClick}   onSetPreview={handleSetPreview}
+                  onDelete={handleDeleteItem}
+                  expandedFolders={expandedFolders} toggleFolder={toggleFolder}
+                  onAddFile={p  => openNewItemForm('file',   p)}
+                  onAddFolder={p => openNewItemForm('folder', p)}
+                />
+              ))}
             </div>
           </div>
+        )}
 
-          {/* New-item input form */}
-          {newItem.visible && (
-            <div style={{ padding:'6px 10px', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', alignItems:'center', gap:'5px', flexShrink:0, background:'rgba(99,102,241,0.06)' }}>
-              {newItem.type === 'folder'
-                ? <Folder   size={12} color="#fbbf24"/>
-                : <FileText size={12} color="#888"/>}
-              <input
-                ref={newItemRef}
-                value={newItem.name}
-                onChange={e => setNewItem(p => ({ ...p, name: e.target.value }))}
-                onKeyDown={e => {
-                  if (e.key === 'Enter')  handleCreateItem();
-                  if (e.key === 'Escape') setNewItem({ visible:false, parent:'', type:'file', name:'' });
+        {/* ── CODE MODE: Language info sidebar ── */}
+        {editorMode === 'code' && (
+          <div style={{
+            width: '48px', flexShrink: 0, marginRight: '8px',
+            background: 'rgba(0,0,0,0.12)', backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            padding: '12px 0', gap: '8px', overflow: 'hidden',
+          }}>
+            {LANGUAGES.map(l => (
+              <button
+                key={l.key}
+                title={l.label}
+                onClick={() => canEdit && handleLangChange(l.key)}
+                style={{
+                  width: '34px', height: '34px', borderRadius: '8px', border: 'none',
+                  cursor: canEdit ? 'pointer' : 'default',
+                  background: l.key === selectedLang ? l.bg : 'transparent',
+                  border: l.key === selectedLang ? `1px solid ${l.color}55` : '1px solid transparent',
+                  color: 'white', fontSize: '0.72rem', display: 'flex', alignItems: 'center',
+                  justifyContent: 'center', transition: 'all 0.15s',
+                  boxShadow: l.key === selectedLang ? `0 0 10px ${l.color}33` : 'none',
                 }}
-                placeholder={newItem.type === 'folder' ? 'folder-name' : 'filename.html'}
-                style={{ flex:1, background:'rgba(255,255,255,0.07)', border:'1px solid rgba(99,102,241,0.5)', borderRadius:'4px', color:'#fff', padding:'3px 7px', fontSize:'0.78rem', outline:'none', fontFamily:'inherit', boxSizing:'border-box', minWidth:0 }}
-              />
-              {newItem.parent && (
-                <span style={{ fontSize:'0.62rem', color:'rgba(255,255,255,0.3)', flexShrink:0 }}>in {newItem.parent}</span>
-              )}
-            </div>
-          )}
-
-          {/* File tree */}
-          <div className="tree-scroll" style={{ flex:1, overflowY:'auto' }}>
-            {rootChildren.map(([path, node]) => (
-              <TreeNode
-                key={path}
-                path={path} node={node} tree={fileTree} level={0}
-                activeFilePath={activeFilePath} previewFilePath={previewFilePath}
-                onFileClick={handleFileClick}   onSetPreview={handleSetPreview}
-                onDelete={handleDeleteItem}
-                expandedFolders={expandedFolders} toggleFolder={toggleFolder}
-                onAddFile={p  => openNewItemForm('file',   p)}
-                onAddFolder={p => openNewItemForm('folder', p)}
-              />
+                onMouseEnter={e => { if (l.key !== selectedLang) e.currentTarget.style.background = 'rgba(255,255,255,0.07)'; }}
+                onMouseLeave={e => { if (l.key !== selectedLang) e.currentTarget.style.background = 'transparent'; }}
+              >
+                <span style={{ fontSize: '0.65rem', lineHeight: 1, textAlign: 'center', userSelect: 'none' }}>
+                  {l.icon}
+                </span>
+              </button>
             ))}
           </div>
-        </div>
+        )}
 
-        {/* ── EDITOR ── */}
-        <div style={{ flex:`0 0 calc((100% - ${SIDEBAR_W + 16}px) * ${splitPct/100})`, display:'flex', flexDirection:'column', borderRadius:'12px', overflow:'hidden', border:'1px solid rgba(255,255,255,0.1)', background:'rgba(0,0,0,0.1)', backdropFilter:'blur(10px)', minWidth:0 }}>
+        {/* ── EDITOR PANEL ── */}
+        <div style={{ flex:`0 0 calc((100% - ${editorMode === 'web' ? SIDEBAR_W + 16 : 64}px) * ${splitPct/100})`, display:'flex', flexDirection:'column', borderRadius:'12px', overflow:'hidden', border:'1px solid rgba(255,255,255,0.1)', background:'rgba(0,0,0,0.1)', backdropFilter:'blur(10px)', minWidth:0 }}>
 
-          {/* Active file tab (breadcrumb) */}
-          <div style={{ display:'flex', background:'rgba(0,0,0,0.05)', borderBottom:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
-            <div style={{ padding:'9px 18px', background:'rgba(255,255,255,0.05)', borderBottom:'1.5px solid #6366f1', color:'#fff', fontSize:'0.78rem', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px', whiteSpace:'nowrap', overflow:'hidden', maxWidth:'100%' }}>
-              {activeFileNode && <FileIcon name={activeFileNode.name}/>}
-              {dirPart && (
-                <span style={{ color:'rgba(255,255,255,0.35)', fontSize:'0.7rem' }}>{dirPart} /&nbsp;</span>
+          {/* Active file tab */}
+          <div style={{ display:'flex', background:'rgba(0,0,0,0.05)', borderBottom:'1px solid rgba(255,255,255,0.06)', flexShrink:0, alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ padding:'9px 18px', background:'rgba(255,255,255,0.05)', borderBottom:`1.5px solid ${editorMode === 'code' ? currentLangDef.color : '#6366f1'}`, color:'#fff', fontSize:'0.78rem', fontWeight:'600', display:'flex', alignItems:'center', gap:'6px', whiteSpace:'nowrap', overflow:'hidden', maxWidth:'60%' }}>
+              {editorMode === 'web' ? (
+                <>
+                  {activeFileNode && <FileIcon name={activeFileNode.name}/>}
+                  {dirPart && (
+                    <span style={{ color:'rgba(255,255,255,0.35)', fontSize:'0.7rem' }}>{dirPart} /&nbsp;</span>
+                  )}
+                  <span>{fileName}</span>
+                </>
+              ) : (
+                <>
+                  <span style={{ fontSize: '0.9rem' }}>{currentLangDef.icon}</span>
+                  <span>main.{currentLangDef.ext}</span>
+                  <span style={{ fontSize: '0.68rem', color: currentLangDef.color, background: currentLangDef.bg, padding: '1px 7px', borderRadius: '10px', border: `1px solid ${currentLangDef.color}44` }}>
+                    {currentLangDef.label}
+                  </span>
+                </>
               )}
-              <span>{fileName}</span>
             </div>
+            {editorMode === 'code' && canEdit && (
+              <button
+                onClick={handleRunCode}
+                disabled={isRunning}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '5px',
+                  margin: '0 12px', padding: '4px 12px', borderRadius: '6px',
+                  border: 'none', cursor: isRunning ? 'not-allowed' : 'pointer',
+                  background: isRunning ? 'rgba(34,197,94,0.1)' : 'rgba(34,197,94,0.2)',
+                  color: '#4ade80', fontWeight: '700', fontSize: '0.75rem',
+                  fontFamily: 'inherit', border: `1px solid rgba(34,197,94,${isRunning ? '0.2' : '0.4'})`,
+                }}
+              >
+                {isRunning
+                  ? <span style={{ display:'inline-block', animation:'spin 0.8s linear infinite' }}>↻</span>
+                  : <Play size={11} fill="currentColor" />}
+                {isRunning ? 'Running…' : '▶ Run'}
+              </button>
+            )}
           </div>
 
           <div style={{ flex:1, minHeight:0 }}>
             <MonacoEditor
-              path={activeFilePath}
+              path={editorMode === 'code' ? codeModeKey(selectedLang) : activeFilePath}
               height="100%"
-              language={activeFileNode?.language ?? 'plaintext'}
-              value={activeFileNode?.value ?? ''}
+              language={editorMode === 'code' ? currentLangDef.monacoLang : (activeFileNode?.language ?? 'plaintext')}
+              value={editorMode === 'code' ? codeContent : (activeFileNode?.value ?? '')}
               onChange={handleEditorChange}
               onMount={(_, monaco) => defineTheme(monaco)}
               theme="collab-dark"
@@ -898,29 +1579,45 @@ export default function EditorPage() {
           />
         </div>
 
-        {/* ── LIVE PREVIEW ── */}
+        {/* ── RIGHT PANEL: Live Preview (web) OR Output (code) ── */}
         <div style={{ flex:1, minWidth:0, display:'flex', flexDirection:'column', borderRadius:'12px', overflow:'hidden', border:'1px solid rgba(255,255,255,0.1)', background:'rgba(0,0,0,0.1)', backdropFilter:'blur(10px)' }}>
-          <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 14px', background:'rgba(0,0,0,0.05)', borderBottom:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
-            <div style={{ display:'flex', alignItems:'center', gap:'7px' }}>
-              <span style={{ width:9, height:9, borderRadius:'50%', background:'#ff5f57', display:'inline-block' }}/>
-              <span style={{ width:9, height:9, borderRadius:'50%', background:'#febc2e', display:'inline-block' }}/>
-              <span style={{ width:9, height:9, borderRadius:'50%', background:'#28c840', display:'inline-block' }}/>
-              <div style={{ marginLeft:'10px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:'5px', padding:'3px 12px', fontSize:'0.72rem', color:'rgba(255,255,255,0.4)', display:'flex', alignItems:'center', gap:'5px', maxWidth:'180px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                <Globe size={10}/> {previewFilePath}
+
+          {editorMode === 'web' ? (
+            <>
+              <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', padding:'7px 14px', background:'rgba(0,0,0,0.05)', borderBottom:'1px solid rgba(255,255,255,0.06)', flexShrink:0 }}>
+                <div style={{ display:'flex', alignItems:'center', gap:'7px' }}>
+                  <span style={{ width:9, height:9, borderRadius:'50%', background:'#ff5f57', display:'inline-block' }}/>
+                  <span style={{ width:9, height:9, borderRadius:'50%', background:'#febc2e', display:'inline-block' }}/>
+                  <span style={{ width:9, height:9, borderRadius:'50%', background:'#28c840', display:'inline-block' }}/>
+                  <div style={{ marginLeft:'10px', background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:'5px', padding:'3px 12px', fontSize:'0.72rem', color:'rgba(255,255,255,0.4)', display:'flex', alignItems:'center', gap:'5px', maxWidth:'180px', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                    <Globe size={10}/> {previewFilePath}
+                  </div>
+                </div>
+                <button onClick={refreshPreview} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', fontSize:'0.72rem', padding:'3px 6px', borderRadius:'4px' }}
+                  onMouseEnter={e=>e.currentTarget.style.color='#fff'}
+                  onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.35)'}>
+                  <RefreshCw size={12}/> Refresh
+                </button>
               </div>
-            </div>
-            <button onClick={refreshPreview} style={{ background:'transparent', border:'none', color:'rgba(255,255,255,0.35)', cursor:'pointer', display:'flex', alignItems:'center', gap:'4px', fontSize:'0.72rem', padding:'3px 6px', borderRadius:'4px' }}
-              onMouseEnter={e=>e.currentTarget.style.color='#fff'}
-              onMouseLeave={e=>e.currentTarget.style.color='rgba(255,255,255,0.35)'}>
-              <RefreshCw size={12}/> Refresh
-            </button>
-          </div>
-          <iframe
-            srcDoc={srcDoc}
-            title="Live Preview"
-            sandbox="allow-scripts allow-same-origin"
-            style={{ flex:1, border:'none', background:'#fff', width:'100%' }}
-          />
+              <iframe
+                srcDoc={srcDoc}
+                title="Live Preview"
+                sandbox="allow-scripts allow-same-origin"
+                style={{ flex:1, border:'none', background:'#fff', width:'100%' }}
+              />
+            </>
+          ) : (
+            <OutputPanel
+              output={codeOutput}
+              isRunning={isRunning}
+              onRun={handleRunCode}
+              stdin={stdinValue}
+              onStdinChange={setStdinValue}
+              cpuTime={runMeta.cpuTime}
+              memory={runMeta.memory}
+              canEdit={canEdit}
+            />
+          )}
         </div>
       </main>
     </div>
