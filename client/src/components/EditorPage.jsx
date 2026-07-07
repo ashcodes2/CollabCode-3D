@@ -815,7 +815,7 @@ export default function EditorPage() {
   }, []);
 
   // ── Misc (UNCHANGED) ─────────────────────────────────────────────────────
-  const copyLink = async () => { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(()=>setCopied(false),2000); };
+  const copyRoomId = async () => { await navigator.clipboard.writeText(roomId); setCopied(true); setTimeout(()=>setCopied(false),2000); };
   const refreshPreview = () => { setSrcDoc(''); setTimeout(()=>setSrcDoc(buildSrcDoc(fileTree,previewFilePath)),60); };
 
   const activeFileNode  = editorMode==='web' ? fileTree[activeFilePath] : null;
@@ -918,13 +918,13 @@ export default function EditorPage() {
             <strong style={{ color:'#fff', fontFamily:"'JetBrains Mono',monospace", letterSpacing:'0.06em' }}>{roomId}</strong>
           </div>
 
-          {/* Share button */}
+          {/* Copy Room ID button */}
           <motion.button
             whileHover={{ scale:1.03 }} whileTap={{ scale:0.97 }}
-            onClick={copyLink}
+            onClick={copyRoomId}
             style={{ display:'flex', alignItems:'center', gap:5, padding:'5px 12px', borderRadius:7, cursor:'pointer', border:`1px solid ${copied?'rgba(16,185,129,0.4)':'rgba(99,102,241,0.35)'}`, background:copied?'rgba(16,185,129,0.1)':'rgba(99,102,241,0.1)', color:'#fff', fontWeight:600, fontSize:'0.72rem', fontFamily:'Inter,sans-serif', transition:'all 0.2s' }}>
             {copied ? <Check size={12} color="#4ade80"/> : <Copy size={12}/>}
-            {copied ? 'Copied!' : 'Share'}
+            {copied ? 'Copied!' : 'Copy ID'}
           </motion.button>
         </div>
       </header>
