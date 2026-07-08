@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import MonacoEditor from '@monaco-editor/react';
 import { emmetHTML, emmetCSS, emmetJSX } from 'emmet-monaco-es';
@@ -7,7 +7,7 @@ import {
   FileCode, FileText, Braces, FileCog, Trash2,
   ChevronDown, ChevronRight, FolderOpen, Folder,
   FilePlus, FolderPlus, Play, Terminal as TerminalIcon,
-  Layout, Clock, Cpu, Zap, MoreHorizontal,
+  Layout, Clock, Cpu, Zap,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as Y from 'yjs';
@@ -17,7 +17,7 @@ import '../index.css';
 // ══════════════════════════════════════════════════════════════════════════════
 // ── Language definitions (UNCHANGED) ─────────────────────────────────────────
 // ══════════════════════════════════════════════════════════════════════════════
-export const LANGUAGES = [
+const LANGUAGES = [
   { key:'javascript', label:'JavaScript', ext:'js',    monacoLang:'javascript', color:'#f7df1e', bg:'rgba(247,223,30,0.12)',    icon:'𝙅𝙎', starter:`// JavaScript — Node.js\nconst readline = require('readline');\nconst rl = readline.createInterface({ input: process.stdin });\nlet lines = [];\nrl.on('line', l => lines.push(l.trim()));\nrl.on('close', () => {\n  console.log('Hello, World! 👋');\n});` },
   { key:'typescript', label:'TypeScript', ext:'ts',    monacoLang:'typescript', color:'#3178c6', bg:'rgba(49,120,198,0.15)',    icon:'𝙏𝙎', starter:`// TypeScript\nfunction greet(name: string): string {\n  return \`Hello, \${name}! 👋\`;\n}\nconsole.log(greet('World'));` },
   { key:'python',     label:'Python',     ext:'py',    monacoLang:'python',     color:'#3572A5', bg:'rgba(53,114,165,0.15)',    icon:'🐍', starter:`# Python 3\ndef solve():\n    name = input("Enter name: ")\n    print(f"Hello, {name}! 👋")\nsolve()` },
@@ -640,7 +640,7 @@ export default function EditorPage() {
             return {...prev,[fileName]:{...prev[fileName],value:newValue}};
           });
         }
-      } catch(_) {}
+      } catch { /* intentionally swallow Yjs applyUpdate errors on malformed packets */ }
     });
 
     socket.on('sync-update', ({ fileName, update }) => {
@@ -659,7 +659,7 @@ export default function EditorPage() {
           if (!prev[fileName]) { const name=fileName.split('/').pop(); return {...prev,[fileName]:{type:'file',name,language:inferLanguage(name),value:newValue}}; }
           return {...prev,[fileName]:{...prev[fileName],value:newValue}};
         });
-      } catch(_) {}
+      } catch { /* intentionally swallow Yjs applyUpdate errors on malformed packets */ }
     });
 
     socket.on('tree-init', (serverTree) => {
@@ -699,7 +699,10 @@ export default function EditorPage() {
     socket.on('edit-granted',  ()  => { setEditRequestPending(false); setCanEdit(true); sessionStorage.setItem(`can_edit_${roomId}`,'true'); addToast('✅ Edit access granted! You can now type.','success'); });
     socket.on('edit-denied',   ()  => { setEditRequestPending(false); addToast('❌ Request denied by admin.','error'); });
 
-    return () => { socket.disconnect(); yjsDocs.current.forEach(doc=>doc.destroy()); };
+    // Snapshot the Map reference so the cleanup can safely iterate it
+    // even if the ref has been reassigned by the time it runs.
+    const docs = yjsDocs.current;
+    return () => { socket.disconnect(); docs.forEach(doc => doc.destroy()); };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
@@ -712,7 +715,6 @@ export default function EditorPage() {
     const onUpdate = update => { if(socketRef.current?.connected) socketRef.current.emit('sync-update',roomId,{fileName:activeSyncKey,update:Array.from(update)}); };
     doc.on('update', onUpdate);
     return () => doc.off('update', onUpdate);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeSyncKey, roomId]);
 
   // ── Editor change (UNCHANGED) ─────────────────────────────────────────────
@@ -963,17 +965,18 @@ export default function EditorPage() {
             <div style={{ padding:'8px 10px', fontSize:'0.6rem', fontWeight:700, textTransform:'uppercase', letterSpacing:'0.1em', color:'rgba(255,255,255,0.25)', borderBottom:'1px solid rgba(255,255,255,0.05)', display:'flex', alignItems:'center', justifyContent:'space-between', flexShrink:0, fontFamily:'Inter,sans-serif' }}>
               <span>Explorer</span>
               <div style={{ display:'flex', gap:2 }}>
-                {[
-                  { icon:<FilePlus size={12}/>,   title:'New File',   cb:()=>openNewItemForm('file',''),   hc:'#a78bfa' },
-                  { icon:<FolderPlus size={12}/>, title:'New Folder', cb:()=>openNewItemForm('folder',''), hc:'#fbbf24' },
-                ].map((btn,i) => (
-                  <button key={i} onClick={btn.cb} title={btn.title}
-                    style={{ background:'transparent',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.3)',display:'flex',padding:'3px',borderRadius:4,transition:'all 0.15s' }}
-                    onMouseEnter={e=>{e.currentTarget.style.color=btn.hc;e.currentTarget.style.background='rgba(255,255,255,0.06)';}}
-                    onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.3)';e.currentTarget.style.background='transparent';}}>
-                    {btn.icon}
-                  </button>
-                ))}
+                <button onClick={() => openNewItemForm('file','')} title="New File"
+                  style={{ background:'transparent',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.3)',display:'flex',padding:'3px',borderRadius:4,transition:'all 0.15s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.color='#a78bfa';e.currentTarget.style.background='rgba(255,255,255,0.06)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.3)';e.currentTarget.style.background='transparent';}}>
+                  <FilePlus size={12}/>
+                </button>
+                <button onClick={() => openNewItemForm('folder','')} title="New Folder"
+                  style={{ background:'transparent',border:'none',cursor:'pointer',color:'rgba(255,255,255,0.3)',display:'flex',padding:'3px',borderRadius:4,transition:'all 0.15s' }}
+                  onMouseEnter={e=>{e.currentTarget.style.color='#fbbf24';e.currentTarget.style.background='rgba(255,255,255,0.06)';}}
+                  onMouseLeave={e=>{e.currentTarget.style.color='rgba(255,255,255,0.3)';e.currentTarget.style.background='transparent';}}>
+                  <FolderPlus size={12}/>
+                </button>
               </div>
             </div>
 
@@ -1021,7 +1024,7 @@ export default function EditorPage() {
                 <button key={l.key} title={l.label}
                   onClick={() => canEdit && handleLangChange(l.key)}
                   style={{
-                    width:32, height:32, borderRadius:7, border:'none',
+                    width:32, height:32, borderRadius:7,
                     cursor:canEdit?'pointer':'default',
                     background: active ? l.bg : 'transparent',
                     border:`1px solid ${active ? `${l.color}44` : 'transparent'}`,

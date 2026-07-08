@@ -1,9 +1,9 @@
-import React, { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Code2, Rocket, Lock, LogIn, Plus, Eye, EyeOff,
-  AlertCircle, Zap, Globe, Users, Terminal,
+  AlertCircle, Zap, Users, Terminal,
   ArrowRight, Sparkles, RefreshCw, Copy, Check,
 } from 'lucide-react';
 import '../index.css';

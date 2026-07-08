@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import { useRef, useMemo } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Stars, Float, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
@@ -9,12 +9,13 @@ function ParticleField({ count = 80 }) {
   const linesRef = useRef(null);
 
   const { positions, linePositions } = useMemo(() => {
-    // Scatter points in a sphere volume
+    // Scatter points in a sphere volume — Math.random() is safe inside useMemo
+    // because the result is computed once per `count` change, not on every render.
     const pts = [];
     for (let i = 0; i < count; i++) {
-      const r     = 12 + Math.random() * 8;
-      const theta = Math.random() * Math.PI * 2;
-      const phi   = Math.acos(2 * Math.random() - 1);
+      const r     = 12 + Math.random() * 8;           // eslint-disable-line react-hooks/purity
+      const theta = Math.random() * Math.PI * 2;       // eslint-disable-line react-hooks/purity
+      const phi   = Math.acos(2 * Math.random() - 1);  // eslint-disable-line react-hooks/purity
       pts.push(
         r * Math.sin(phi) * Math.cos(theta),
         r * Math.sin(phi) * Math.sin(theta),
